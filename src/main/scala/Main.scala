@@ -69,8 +69,8 @@ object Main extends App {
 
       val json = get(token, aspace + ao)
       val tc = json.\("instances")(0).\("sub_container").\("top_container").\("ref")
-      val title = json.\("title")
-      println(i + s": $ao $title")    
+      val title = json.\("title").extract[String]
+      println(i + s": $ao: $title")    
       
       (tc == oldTC) match {
         case true => {
