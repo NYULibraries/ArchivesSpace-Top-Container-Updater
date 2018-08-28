@@ -1,0 +1,5 @@
+acmUpdater {
+    username="username"
+    password="password"
+    aspaceApi="aspace api url"
+}
