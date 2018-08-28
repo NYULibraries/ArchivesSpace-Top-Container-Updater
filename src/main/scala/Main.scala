@@ -113,7 +113,7 @@ object Main extends App {
       }
     } catch {
       case e: Exception => {
-        errorLogger.log(e.toString + "\n")
+        errorLogger.write(e.toString + "\n")
         errorLogger.flush
       }
     }
