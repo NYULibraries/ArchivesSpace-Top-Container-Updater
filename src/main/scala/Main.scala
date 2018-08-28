@@ -1,10 +1,8 @@
 package edu.nyu.libraries.dlts
 
 import com.typesafe.config._
-
 import java.io._
 import java.net.URI
-
 import org.apache.http.HttpEntity
 import org.apache.http.HttpResponse
 import org.apache.http.client.{ ClientProtocolException, ResponseHandler }
@@ -14,26 +12,27 @@ import org.apache.http.impl.client.{ HttpClientBuilder, CloseableHttpClient }
 import org.apache.http.impl.client.HttpClients
 import org.apache.http.util.EntityUtils
 import org.apache.http.entity.StringEntity
-
 import org.json4s._
 import org.json4s.jackson.JsonMethods._
 import org.json4s.DefaultFormats
-
 import scala.io.Source
-
-
+import org.rogach.scallop._
 
 object Main extends App {
 
-  //initialize configuration
-  val conf = ConfigFactory.load()
-
-  //initialize values
   implicit val formats = DefaultFormats
-  val csv = args(0)
-  val log = args(1)
-  val drop = args(2).toInt
-  val take = args(3).toInt
+
+  //initialize configurations
+  val conf = ConfigFactory.load()
+  val cli = new CLIConf(args)
+   
+  //initialize cli arguments
+  val csv = cli.source()
+  val log = cli.log()
+  val drop = cli.drop()
+  val take = cli.take()
+
+  //initialize configuration file
   val username = conf.getString("tcUpdater.username")
   val password = conf.getString("tcUpdater.password")
   val aspace = conf.getString("tcUpdater.aspaceApi")
@@ -53,78 +52,84 @@ object Main extends App {
   
   //get authenticate
   val token = getToken
-  
-  //initialize counter
-  var i = drop
-  
-  //itterate through csv file
-  Source.fromFile(csv).getLines.drop(drop).take(take).foreach{ line =>
-    i = i + 1
-    val cols = line.split(",")
-    val ao = cols(0)
-    val oldTC = JString(cols(1))
-    val newTC = JString(cols(2))
 
-    try{
+  process
+  
+  def process() { 
+    
 
-      val json = get(token, aspace + ao)
-      val tc = json.\("instances")(0).\("sub_container").\("top_container").\("ref")
-      val title = json.\("title").extract[String]
-      println(i + s": $ao: $title")    
-      
-      (tc == oldTC) match {
-        case true => {
-          (tc != newTC) match {
-            case true => {
-            
-              val updated = json.mapField {
-                  case ("instances", JArray(head :: tail)) => ("instances", JArray(head.mapField {
-                    case ("ref", oldTC) => ("ref", newTC)
+    //initialize counter
+    var i = drop
+    
+    //itterate through csv file
+    Source.fromFile(csv).getLines.drop(drop).take(take).foreach{ line =>
+      i = i + 1
+      val cols = line.split(",")
+      val ao = cols(0)
+      val oldTC = JString(cols(1))
+      val newTC = JString(cols(2))
+
+      try{
+
+        val json = get(token, aspace + ao)
+        val tc = json.\("instances")(0).\("sub_container").\("top_container").\("ref")
+        val title = json.\("title").extract[String]
+        println(i + s": $ao: $title")    
+        
+        (tc == oldTC) match {
+          case true => {
+            (tc != newTC) match {
+              case true => {
+              
+                val updated = json.mapField {
+                    case ("instances", JArray(head :: tail)) => ("instances", JArray(head.mapField {
+                      case ("ref", oldTC) => ("ref", newTC)
+                      case otherwise => otherwise
+                    } :: tail))
                     case otherwise => otherwise
-                  } :: tail))
-                  case otherwise => otherwise
-              }
+                }
 
-              (updated.\("instances")(0).\("sub_container").\("top_container").\("ref") == newTC) match {
-                case true => {
-                  val updatedJson = (compact(render(updated)))
-                  post(token, aspace + ao, updatedJson)           
-                  logger.write(s"$ao $title updated $oldTC set to $newTC \n")
-                  logger.flush
-                }
-                case false => {
-                  logger.write(s"could not update $ao, target uri does not match spreadsheet \n")
-                  logger.flush  
-                }
-             }
-          } 
-          
-          case false => {
-            logger.write(s"$ao $title not updated, target uri, $newTC, is the same as current uri, $tc \n")
-            logger.flush
+                (updated.\("instances")(0).\("sub_container").\("top_container").\("ref") == newTC) match {
+                  case true => {
+                    val updatedJson = (compact(render(updated)))
+                    post(token, aspace + ao, updatedJson)           
+                    logger.write(s"$ao $title updated $oldTC set to $newTC \n")
+                    logger.flush
+                  }
+                  case false => {
+                    logger.write(s"could not update $ao, target uri does not match spreadsheet \n")
+                    logger.flush  
+                  }
+               }
+            } 
+            
+            case false => {
+              logger.write(s"$ao $title not updated, target uri, $newTC, is the same as current uri, $tc \n")
+              logger.flush
+            }
           }
         }
-      }
-        
-      case false => {
-        logger.write(s"$ao $title not updated, original uri, $oldTC, is not equal to current uri, $tc \n" )
-        logger.flush
+          
+        case false => {
+          logger.write(s"$ao $title not updated, original uri, $oldTC, is not equal to current uri, $tc \n" )
+          logger.flush
+          }
+        }
+      } catch {
+        case e: Exception => {
+          errorLogger.write(e.toString + "\n")
+          errorLogger.flush
         }
       }
-    } catch {
-      case e: Exception => {
-        errorLogger.write(e.toString + "\n")
-        errorLogger.flush
-      }
     }
-  }
 
-  //cleanup
-  logger.flush
-  errorLogger.flush
-  logger.close
-  errorLogger.close
-  client.close
+    //cleanup
+    logger.flush
+    errorLogger.flush
+    logger.close
+    errorLogger.close
+    client.close
+  }
 
   //methods
   def getToken(): String = {
@@ -164,4 +169,12 @@ object Main extends App {
     response.close
   }
   
+}
+
+class CLIConf(arguments: Seq[String]) extends ScallopConf(arguments) {
+  val source = opt[String](required = true)
+  val log = opt[String](required = true)
+  val drop = opt[Int](required = true)
+  val take = opt[Int](required = true)
+  verify()
 }
