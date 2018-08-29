@@ -13,6 +13,8 @@ import scala.io.Source
 
 object Main extends App with CLISupport with HttpSupport{
 
+  println("ACM Top Container Update Tool, v.0.1b")
+
   //initialize command line arguments
   val cli = getCLI(args)  
   val csv = cli.source()
@@ -69,7 +71,7 @@ object Main extends App with CLISupport with HttpSupport{
                   case true => {
                     val updatedJson = (compact(render(updated)))
                     postJson(ao, updatedJson)           
-                    logger.write(s"$ao $title updated $oldTC set to $newTC \n")
+                    logger.write(s"$ao $title updated ${oldTC.extract[String]} set to ${newTC.extract[String]} \n")
                     logger.flush
                   }
                   case false => {
@@ -80,14 +82,14 @@ object Main extends App with CLISupport with HttpSupport{
             } 
             
             case false => {
-              logger.write(s"$ao $title not updated, target uri, $newTC, is the same as current uri, $tc \n")
+              logger.write(s"$ao $title not updated, target uri, ${newTC.extract[String]}, is the same as current uri \n")
               logger.flush
             }
           }
         }
           
         case false => {
-          logger.write(s"$ao $title not updated, original uri, $oldTC, is not equal to current uri, $tc \n" )
+          logger.write(s"$ao $title not updated, original uri, ${oldTC.extract[String]}, is not equal to current uri, ${tc.extract[String]} \n" )
           logger.flush
           }
         }

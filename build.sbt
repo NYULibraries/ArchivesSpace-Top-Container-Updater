@@ -1,5 +1,11 @@
 scalaVersion := "2.12.6"
 
+assemblyJarName in assembly := "TCUpdate.jar"
+
+mainClass in assembly := Some("edu.nyu.libraries.dlts.aspace.Main")
+
+version := "0.1b-SNAPSHOT"
+
 libraryDependencies ++= Seq(
   "org.apache.httpcomponents" % "httpclient" % "4.5.2",
   "org.json4s" %% "json4s-jackson" % "3.6.0",

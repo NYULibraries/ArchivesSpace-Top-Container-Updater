@@ -119,12 +119,12 @@ object  CLI {
     }
 
     def help() {
-      println("usage: java -jar tcUpdate.jar [options]")
+      println("usage: java -jar TCUpdate.jar [options]")
       println("  options:")
       println("    -s, --source, required\tpath to csv file to be input")
       println("    -l, --log, required\t\tpath to log file to be written")
-      println("    -d, --drop, optional\tnumber of rows to skip from the beginning of csv file")
-      println("    -t, --take, optional\tnumber of rows to process from csv file")
+      println("    -d, --drop, required\tnumber of rows to skip from the beginning of csv file")
+      println("    -t, --take, required\tnumber of rows to process from csv file")
       println("    -h, --help\tprint this message")
       System.exit(0)
     }
