@@ -42,7 +42,7 @@ object Main extends App with CLISupport with HttpSupport{
         val json = get(ao).get
         val tc = json.\("instances")(0).\("sub_container").\("top_container").\("ref")
         val title = json.\("title").extract[String]
-        val info = ("$i\t$ao\t$title")    
+        val info = (s"$i\t$ao\t$title")    
         print(info)
 
         //check that the current top container URI is eqaul to the value from the spreadsheet
