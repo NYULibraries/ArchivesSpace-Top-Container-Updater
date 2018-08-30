@@ -42,7 +42,7 @@ object Main extends App with CLISupport with HttpSupport{
         val json = get(ao).get
         val tc = json.\("instances")(0).\("sub_container").\("top_container").\("ref")
         val title = json.\("title").extract[String]
-        val info = (s"$i\t$ao\t$title")    
+        val info = (s"$i. $ao\t$title\t")    
         print(info)
 
         //check that the current top container URI is eqaul to the value from the spreadsheet
@@ -67,13 +67,13 @@ object Main extends App with CLISupport with HttpSupport{
                   case true => {
                     val updatedJson = (compact(render(updated)))
                     postJson(ao, updatedJson)
-                    println("\tupdate success")           
-                    logger.write(s"$info\tsuccess\t\t${oldTC.extract[String]}\t${newTC.extract[String]} \n")
+                    println("updated")           
+                    logger.write(s"$info success\t\t${oldTC.extract[String]}\t${newTC.extract[String]} \n")
                     logger.flush
                   }
                   //if not log result
                   case false => {
-                    val msg = "\tskipped\tjson update failure"
+                    val msg = "skipped\tjson update failure"
                     println(msg)
                     logger.write(s"$info$msg\n")
                     logger.flush  
@@ -83,7 +83,7 @@ object Main extends App with CLISupport with HttpSupport{
 
               //if not log the result
               case false => {
-                val msg = "\tskipped\talready updated"
+                val msg = "skipped\talready updated"
                 println(msg)
                 logger.write(s"$info$msg\n")
                 logger.flush
@@ -93,7 +93,7 @@ object Main extends App with CLISupport with HttpSupport{
 
           //if not log the result  
           case false => {
-            val msg = "\tskipped\turl mismatch"
+            val msg = "skipped\turl mismatch"
             println(msg)
             logger.write(s"$info$msg\n")
             logger.flush
