@@ -1,8 +1,5 @@
 package edu.nyu.libraries.dlts.aspace
 
-import CLI.CLISupport
-import Http.HttpSupport
-
 import java.io._
 import java.net.URI
 import org.json4s._
@@ -10,8 +7,10 @@ import org.json4s.jackson.JsonMethods._
 import org.json4s.DefaultFormats
 import org.rogach.scallop.exceptions._
 import scala.io.Source
+import CLI.CLISupport
+import Http.HttpSupport
 
-object Main extends App with CLISupport with HttpSupport{
+object Main extends App with CLISupport with HttpSupport {
 
   println("ACM Top Container Update Tool, v.0.1b")
 
@@ -26,16 +25,12 @@ object Main extends App with CLISupport with HttpSupport{
   //initialize logs
   val logger = new FileWriter(new File(log))
   val errorLogger = new FileWriter(new File("errors.txt"))
-
-  //get authenticate
   
-
   //process the csv file
   process
 
   def process() { 
     
-
     //initialize counter
     var i = drop
     
