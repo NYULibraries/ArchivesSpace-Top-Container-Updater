@@ -6,7 +6,7 @@ import org.json4s.jackson.JsonMethods._
 import scala.io.Source
 import Traits._
 
-object Main extends App with CLISupport with HttpSupport{
+object Main extends App with CLISupport with HttpSupport {
 
   println("ACM Top Container Update Tool, v.0.1b")
 
