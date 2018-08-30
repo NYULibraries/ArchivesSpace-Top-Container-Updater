@@ -1,20 +1,23 @@
 package edu.nyu.libraries.dlts.aspace
 
-object Http {
+import com.typesafe.config._
+import org.apache.http.HttpEntity
+import org.apache.http.HttpResponse
+import org.apache.http.client.{ ClientProtocolException, ResponseHandler }
+import org.apache.http.client.config.RequestConfig
+import org.apache.http.client.methods.{ HttpPost, HttpGet }
+import org.apache.http.impl.client.{ HttpClientBuilder, CloseableHttpClient } 
+import org.apache.http.impl.client.HttpClients
+import org.apache.http.util.EntityUtils
+import org.apache.http.entity.StringEntity
+import org.json4s._
+import org.json4s.jackson.JsonMethods._
+import org.json4s.DefaultFormats
+import org.rogach.scallop._
+import org.rogach.scallop.exceptions._
 
-  import com.typesafe.config._
-  import org.apache.http.HttpEntity
-  import org.apache.http.HttpResponse
-  import org.apache.http.client.{ ClientProtocolException, ResponseHandler }
-  import org.apache.http.client.config.RequestConfig
-  import org.apache.http.client.methods.{ HttpPost, HttpGet }
-  import org.apache.http.impl.client.{ HttpClientBuilder, CloseableHttpClient } 
-  import org.apache.http.impl.client.HttpClients
-  import org.apache.http.util.EntityUtils
-  import org.apache.http.entity.StringEntity
-  import org.json4s._
-  import org.json4s.jackson.JsonMethods._
-  import org.json4s.DefaultFormats
+
+object Traits {
 
   //initialize configuration
   val conf = ConfigFactory.load()
@@ -65,7 +68,7 @@ object Http {
     }
 
     def get(url: String): Option[JValue] = {
-      try{
+      try {
         val httpGet = new HttpGet(aspace + url)
         httpGet.addHeader(header, token)
         val response = client.execute(httpGet)
@@ -96,13 +99,7 @@ object Http {
         case e: Exception => None
       }
     }
-  }
-}
-
-object  CLI {
-  
-  import org.rogach.scallop._
-  import org.rogach.scallop.exceptions._
+  } 
 
   trait CLISupport { 
     
