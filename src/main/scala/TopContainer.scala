@@ -1,6 +1,5 @@
 package edu.nyu.libraries.dlts.aspace
 
-
 object Http {
 
   import com.typesafe.config._
@@ -16,7 +15,6 @@ object Http {
   import org.json4s._
   import org.json4s.jackson.JsonMethods._
   import org.json4s.DefaultFormats
-
 
   //initialize configuration
   val conf = ConfigFactory.load()
