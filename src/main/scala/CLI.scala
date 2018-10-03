@@ -54,7 +54,7 @@ object CLI {
 
       val source = new File(cli.source.toOption.get)
 
-      dialogue(new AspaceSession(None, None, None, source, 2, cli.drop.toOption, cli.take.toOption, None, None))
+      dialogue(new AspaceSession(None, None, None, source, conf.getInt("client.timeout"), cli.drop.toOption, cli.take.toOption, None, None))
     }
 
 

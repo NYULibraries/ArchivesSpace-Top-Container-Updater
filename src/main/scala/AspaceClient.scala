@@ -90,7 +90,6 @@ object AspaceClient {
         Some(code)
       } catch {
         case e: Exception => {
-          println("HI")
           None
         }
       }

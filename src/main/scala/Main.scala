@@ -17,12 +17,13 @@ case class AspaceSession(username: Option[String], password: Option[String], url
 
 object Main extends App with CLISupport with AspaceSupport {
 
-  println("ACM Top Container Update Tool, v.0.3b")
+  println("\nACM Top Container Update Tool, v.0.3b\n-------------------------------------\n")
 
   val session = setup(args)
   val iterator = getIterator(session)
-  println("* successfully authenticated\n")
-  process(iterator, session)
+  println("\n1. successfully authenticated\n")
+  process(session)
+  testUpdates(session)
 
 
   private def setup(args: Array[String]): AspaceSession = {
@@ -34,7 +35,7 @@ object Main extends App with CLISupport with AspaceSupport {
     cli.source.exists() match {
       case true =>
       case false => {
-        println("* Source file does not exist, exiting.")
+        println("* ERROR Source file does not exist, exiting.")
         System.exit(1)
       }
     }
@@ -45,7 +46,7 @@ object Main extends App with CLISupport with AspaceSupport {
     session.token match {
       case Some(t) =>
       case None => {
-        println("* Authentication failure, exiting.")
+        println("* ERROR authentication failure, exiting.")
         System.exit(1)
       }
     }
@@ -69,9 +70,10 @@ object Main extends App with CLISupport with AspaceSupport {
     i
   }
 
-  private def process(iterable: Iterator[String], session: AspaceSession): Unit = {
-    println("* processing")
-    iterable.foreach { line =>
+  private def process(session: AspaceSession): Unit = {
+    println("2. running updates")
+    getIterator(session).foreach { line =>
+
       val cols = line.split(",")
       val aoUrl = cols(0)
       val oldTC = JString(cols(1))
@@ -103,7 +105,11 @@ object Main extends App with CLISupport with AspaceSupport {
                     //check that the updated json has the new target uri
                     (updated.\("instances")(0).\("sub_container").\("top_container").\("ref") == newTC) match {
                       //post the updated object
-                      case true => postJson(session, aoUrl, (compact(render(updated))))
+                      case true => {
+                        println(s"updating $title")
+                        postJson(session, aoUrl, (compact(render(updated))))
+
+                      }
                       case false => println(s"$title json object update failed")
                     }
                   }
@@ -123,6 +129,22 @@ object Main extends App with CLISupport with AspaceSupport {
         case e: Exception => {
           println("** " + e.toString + "\n")
         }
+      }
+    }
+  }
+
+  private def testUpdates(aspaceSession: AspaceSession): Unit = {
+    println("\n3. testing urls are updated")
+    getIterator(session).foreach { line =>
+      val cols = line.split(",")
+      val aoUrl = cols(0)
+      val newTC = JString(cols(2))
+      val json = get(session, aoUrl).get
+      val tc = json.\("instances")(0).\("sub_container").\("top_container").\("ref")
+      val title = json.\("title").extract[String]
+      (newTC == tc) match {
+        case true =>
+        case false =>   println(s"$title update failed")
       }
     }
   }
