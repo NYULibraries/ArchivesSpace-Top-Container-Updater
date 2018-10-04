@@ -1,10 +1,10 @@
 scalaVersion := "2.12.6"
 
-assemblyJarName in assembly := "TCUpdate.jar"
+version := ""
+
+assemblyJarName in assembly := "TCUpdate-0.3b-SNAPSHOT.jar"
 
 mainClass in assembly := Some("edu.nyu.libraries.dlts.aspace.Main")
-
-version := "0.1b-SNAPSHOT"
 
 libraryDependencies ++= Seq(
   "org.apache.httpcomponents" % "httpclient" % "4.5.2",

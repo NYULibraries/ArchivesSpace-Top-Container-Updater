@@ -1,19 +1,19 @@
 package edu.nyu.libraries.dlts.aspace
 
-import org.rogach.scallop._
-import org.rogach.scallop.exceptions._
 import java.io.File
 import java.net.URL
 
 import com.typesafe.config.ConfigFactory
+import org.rogach.scallop.exceptions.{Help, RequiredOptionNotFound, ScallopException}
+import org.rogach.scallop.{ScallopConf, ScallopOption}
 
 import scala.io.StdIn
 
 object CLI {
 
-	trait CLISupport { 
+	trait CLISupport {
 
-    val conf = ConfigFactory.load()
+    private val conf = ConfigFactory.load()
 
     def help(optionName: String) {
       println(s"Error: Missing required option $optionName")
@@ -22,10 +22,10 @@ object CLI {
 
 	    def error(message: String) {
       println(message)
-      println(help)
+      println(help())
     }
 
-    def help() {
+    def help(): Unit = {
       println("usage: java -jar TCUpdate.jar [options]")
       println("  options:")
       println("    -s, --source, required\tpath to csv file to be input")
@@ -36,9 +36,9 @@ object CLI {
     }
 
     class CLIConf(arguments: Seq[String]) extends ScallopConf(arguments) {
-      val source = opt[String](required = true)
-      val drop = opt[Int](required = false)
-      val take = opt[Int](required = false)
+      val source: ScallopOption[String] = opt[String](required = true)
+      val drop: ScallopOption[Int] = opt[Int](required = false)
+      val take: ScallopOption[Int] = opt[Int](required = false)
       verify()
     }
 
@@ -46,15 +46,14 @@ object CLI {
 
       val cli = new CLIConf(args) {
         override def onError(e: Throwable): Unit = e match {
-          case Help("") => help
+          case Help("") => help()
           case ScallopException(message) => error(message)
           case RequiredOptionNotFound(optionName) => help(optionName)
         }
       }
 
-      val source = new File(cli.source.toOption.get)
-
-      dialogue(new AspaceSession(None, None, None, source, conf.getInt("client.timeout"), cli.drop.toOption, cli.take.toOption, None, None))
+      val source: File = new File(cli.source.toOption.get)
+      dialogue(AspaceSession(None, None, None, source, conf.getInt("client.timeout"), cli.drop.toOption, cli.take.toOption, None, None))
     }
 
 
@@ -66,11 +65,11 @@ object CLI {
       aspaceSession.copy(username = Some(usr), password= Some(pswd), url = env)
     }
 
-    private def getEnv(): String = {
+    private def getEnv: String = {
       print("Enter the environment (prod, stage, dev), or q to quit: ")
       val env = StdIn.readLine.toLowerCase.trim
 
-      (env == "q") match {
+      env == "q" match {
         case true => System.exit(0) //quit the program
         case false =>
       }
@@ -81,7 +80,7 @@ object CLI {
         case "dev" => env
         case _ => {
           println("Input is not a valid environment")
-          getEnv()
+          getEnv
         }
       }
 
@@ -90,7 +89,7 @@ object CLI {
     private def getFromConsole(str: String): String = {
       print(s"Enter the $str, or q to quit: ")
       val in = StdIn.readLine.trim
-      (in == "q") match {
+      in == "q" match {
         case true => System.exit(0) //quit the program
         case false =>
       }
