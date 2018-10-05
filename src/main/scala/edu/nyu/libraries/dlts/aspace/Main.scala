@@ -23,7 +23,6 @@ object Main extends App with CLISupport with AspaceSupport {
   val now: String = Instant.now().toString
   
   val session: AspaceSession = setup(args)
-  val iterator = getIterator(session)
 
   println("\n1. successfully authenticated\n")
   
