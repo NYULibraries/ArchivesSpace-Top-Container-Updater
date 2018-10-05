@@ -3,8 +3,6 @@ package edu.nyu.libraries.dlts.aspace
 import java.io.{File, FileWriter}
 import java.net.URL
 import java.time.Instant
-
-import edu.nyu.libraries.dlts.aspace.AspaceClient.AspaceSupport
 import edu.nyu.libraries.dlts.aspace.CLI.CLISupport
 import org.apache.http.impl.client.CloseableHttpClient
 import org.json4s.JsonAST.{JArray, JString}
@@ -13,15 +11,12 @@ import org.json4s.jackson.JsonMethods._
 
 import scala.io.Source
 
-
 case class AspaceSession(username: Option[String], password: Option[String], url: Option[URL], source: File, timeout: Int, drop: Option[Int], take: Option[Int], client: Option[CloseableHttpClient], token: Option[String])
 
-object Main extends App with CLISupport with AspaceSupport {
+object Main extends App with CLISupport {
 
-  println("\nACM Top Container Update Tool, v.0.4b\n-------------------------------------\n")
+  println("\nACM Top Container Update Tool, v.1.0\n-------------------------------------\n")
 
-  val now: String = Instant.now().toString
-  
   val session: AspaceSession = setup(args)
 
   println("\n1. successfully authenticated\n")
@@ -30,56 +25,10 @@ object Main extends App with CLISupport with AspaceSupport {
   testUpdates(session, now)
   session.client.get.close
 
-  private def setup(args: Array[String]): AspaceSession = {
-
-    //get a AspaceSession
-    val cli: AspaceSession = getAspaceOptions(args)
-
-    //check if the file exists
-    cli.source.exists() match {
-      case true =>
-      case false => {
-        println("* ERROR Source file does not exist, exiting.")
-        System.exit(1)
-      }
-    }
-
-    val session: AspaceSession = getSession(cli)
-
-    //check that there is a valid token
-    session.token match {
-      case Some(t) =>
-      case None => {
-        println("* ERROR authentication failure, exiting.")
-        System.exit(1)
-      }
-    }
-
-    session
-  }
-
-  private def getIterator(session: AspaceSession): Iterator[String] = {
-    take(drop(Source.fromFile(session.source).getLines, session.drop), session.take)
-  }
-
-  private def drop(iterator: Iterator[String], dropOption: Option[Int]): Iterator[String] = {
-    dropOption match {
-      case Some(n) => iterator.drop(n)
-      case None => iterator
-    }
-  }
-
-  private def take(iterator: Iterator[String], takeOption: Option[Int]): Iterator[String] = { 
-    takeOption match {
-      case Some(n) => iterator.take(n)
-      case None => iterator
-    }
-  }
-
   private def process(session: AspaceSession, now: String): Unit = {
     println("2. running updates")
     
-    val writer = new FileWriter(new File(s"topcontainer-update-$now.log"))
+    val writer = new FileWriter(new File(s"topcontainer-update-$now.tsv"))
 
     getIterator(session).foreach { line =>
 
@@ -111,8 +60,10 @@ object Main extends App with CLISupport with AspaceSupport {
                       } :: tail))
                       case otherwise => otherwise
                     }
+
                     //check that the updated json has the new target uri
                     updated.\("instances")(0).\("sub_container").\("top_container").\("ref") == newTC match {
+
                       //post the updated object
                       case true => {
                         println(s"updating $title")
@@ -121,8 +72,9 @@ object Main extends App with CLISupport with AspaceSupport {
                         postAO(session, aoUrl, compact(render(updated)))
 
                       }
+
                       case false => {
-                        println(s"$title json object update failed")
+                        println(s"* $title json object update failed")
                         writer.write(s"$aoUrl\t$title\tjson object update failed\n")
                         writer.flush()
                       }
@@ -130,11 +82,12 @@ object Main extends App with CLISupport with AspaceSupport {
                   }
 
                   case false => {
-                    println("url mismatch")
+                    println("* $aolurl url mismatch")
                     writer.write(s"$aoUrl\t$title\turl of top container on aspace does not match spreadsheet\n")
                   }
                 }
               }
+
               case false => {
                 println(s"$title already updated")
                 writer.write(s"$aoUrl\t$title\talready at new url\n")
@@ -142,6 +95,7 @@ object Main extends App with CLISupport with AspaceSupport {
               }
             }
           }
+
           case None => {
             println(s"$aoUrl does not exist on server")
             writer.write(s"$aoUrl does not exist on server\n")
@@ -162,8 +116,10 @@ object Main extends App with CLISupport with AspaceSupport {
   private def testUpdates(aspaceSession: AspaceSession, now: String): Unit = {
     println("\n3. testing urls are updated")
     val now = Instant.now().toString
-    val writer = new FileWriter(new File(s"topcontainer-failures-$now.log"))
+    val builder = new StringBuilder
+
     getIterator(session).foreach { line =>
+
       val cols = line.split(",")
       val aoUrl = cols(0)
       val newTC = JString(cols(2))
@@ -173,13 +129,40 @@ object Main extends App with CLISupport with AspaceSupport {
       newTC == tc match {
         case true =>
         case false =>   {
-          println(s"$title update failed")
-          writer.write(s"$aoUrl\t$title\tdid not update\n")
+          println(s"* $title update failed")
+          builder.append(s"$aoUrl\t$title\tdid not update\n")
         }
       }
     }
-    writer.flush()
-    writer.close()
+
+    builder.isEmpty match {
+      case true =>
+      case false => {
+        val writer = new FileWriter(new File(s"topcontainer-errors-$now.tsv"))
+        writer.write(builder.mkString)
+        writer.flush()
+        writer.close()
+      }
+    }
+
+  }
+
+  private def getIterator(session: AspaceSession): Iterator[String] = {
+    take(drop(Source.fromFile(session.source).getLines, session.drop), session.take)
+  }
+
+  private def drop(iterator: Iterator[String], dropOption: Option[Int]): Iterator[String] = {
+    dropOption match {
+      case Some(n) => iterator.drop(n)
+      case None => iterator
+    }
+  }
+
+  private def take(iterator: Iterator[String], takeOption: Option[Int]): Iterator[String] = {
+    takeOption match {
+      case Some(n) => iterator.take(n)
+      case None => iterator
+    }
   }
 
 }

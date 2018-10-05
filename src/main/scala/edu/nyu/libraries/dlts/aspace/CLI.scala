@@ -1,31 +1,32 @@
 package edu.nyu.libraries.dlts.aspace
 
+import com.typesafe.config.ConfigFactory
 import java.io.File
 import java.net.URL
-
-import com.typesafe.config.ConfigFactory
+import java.time.Instant
 import org.rogach.scallop.exceptions.{Help, RequiredOptionNotFound, ScallopException}
 import org.rogach.scallop.{ScallopConf, ScallopOption}
-
 import scala.io.StdIn
+
+import AspaceClient._
 
 object CLI {
 
-	trait CLISupport {
-
+	trait CLISupport extends AspaceSupport {
+    val now: String = Instant.now().toString
     private val conf = ConfigFactory.load()
 
-    def help(optionName: String) {
+    private def help(optionName: String) {
       println(s"Error: Missing required option $optionName")
       help()
     }
 
-	    def error(message: String) {
+    private def error(message: String) {
       println(message)
       println(help())
     }
 
-    def help(): Unit = {
+    private def help(): Unit = {
       println("usage: java -jar TCUpdate.jar [options]")
       println("  options:")
       println("    -s, --source, required\tpath to csv file to be input")
@@ -35,14 +36,14 @@ object CLI {
       System.exit(0)
     }
 
-    class CLIConf(arguments: Seq[String]) extends ScallopConf(arguments) {
+    private class CLIConf(arguments: Seq[String]) extends ScallopConf(arguments) {
       val source: ScallopOption[String] = opt[String](required = true)
       val drop: ScallopOption[Int] = opt[Int](required = false)
       val take: ScallopOption[Int] = opt[Int](required = false)
       verify()
     }
 
-    def getAspaceOptions(args: Array[String]): AspaceSession = {
+    private def getAspaceOptions(args: Array[String]): AspaceSession = {
 
       val cli = new CLIConf(args) {
         override def onError(e: Throwable): Unit = e match {
@@ -56,6 +57,34 @@ object CLI {
       dialogue(AspaceSession(None, None, None, source, conf.getInt("client.timeout"), cli.drop.toOption, cli.take.toOption, None, None))
     }
 
+
+    def setup(args: Array[String]): AspaceSession = {
+
+      //get a AspaceSession
+      val cli: AspaceSession = getAspaceOptions(args)
+
+      //check if the file exists
+      cli.source.exists() match {
+        case true =>
+        case false => {
+          println("* ERROR Source file does not exist, exiting.")
+          System.exit(1)
+        }
+      }
+
+      val session: AspaceSession = getSession(cli)
+
+      //check that there is a valid token
+      session.token match {
+        case Some(t) =>
+        case None => {
+          println("* ERROR authentication failure, exiting.")
+          System.exit(1)
+        }
+      }
+
+      session
+    }
 
     private def dialogue(aspaceSession: AspaceSession): AspaceSession = {
       val env = Some(new URL(conf.getString(s"client.$getEnv")))
