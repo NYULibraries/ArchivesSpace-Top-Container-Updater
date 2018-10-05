@@ -15,6 +15,7 @@ on linux: http://www.scala-sbt.org/0.13/docs/Installing-sbt-on-Linux.html<br/>
 * Build<br>
 $ git clone https://github.com/NYULibraries/aspace_topcontainer_updater<br/>
 $ cd aspace_topcontainer_updater<br/>
+$ cp src/main/resources/application.conf_template src/main/resources/application.conf<br />
 $ vi src/main/resources/application.conf #Enter your aspace environments and save<br/>
 $ sbt assembly #this will build an executable jar<br/>
 $ cp target/scala-2.12/TCUpdate.jar .<br>
