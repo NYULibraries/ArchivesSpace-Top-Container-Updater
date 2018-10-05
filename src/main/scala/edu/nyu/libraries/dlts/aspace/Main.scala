@@ -18,14 +18,18 @@ case class AspaceSession(username: Option[String], password: Option[String], url
 
 object Main extends App with CLISupport with AspaceSupport {
 
-  println("\nACM Top Container Update Tool, v.0.3b\n-------------------------------------\n")
+  println("\nACM Top Container Update Tool, v.0.4b\n-------------------------------------\n")
 
-  val session = setup(args)
+  val now: String = Instant.now().toString
+  
+  val session: AspaceSession = setup(args)
   val iterator = getIterator(session)
-  println("\n1. successfully authenticated\n")
-  process(session)
-  testUpdates(session)
 
+  println("\n1. successfully authenticated\n")
+  
+  process(session, now)
+  testUpdates(session, now)
+  session.client.get.close
 
   private def setup(args: Array[String]): AspaceSession = {
 
@@ -56,24 +60,26 @@ object Main extends App with CLISupport with AspaceSupport {
   }
 
   private def getIterator(session: AspaceSession): Iterator[String] = {
-    var i = Source.fromFile(session.source).getLines //figure out how to make this variable immutable
-
-    session.drop match {
-      case Some(n) => i = i.drop(n)
-      case None =>
-    }
-
-    session.take match {
-      case Some(n) => i = i.take(n)
-      case None =>
-    }
-
-    i
+    take(drop(Source.fromFile(session.source).getLines, session.drop), session.take)
   }
 
-  private def process(session: AspaceSession): Unit = {
+  private def drop(iterator: Iterator[String], dropOption: Option[Int]): Iterator[String] = {
+    dropOption match {
+      case Some(n) => iterator.drop(n)
+      case None => iterator
+    }
+  }
+
+  private def take(iterator: Iterator[String], takeOption: Option[Int]): Iterator[String] = { 
+    takeOption match {
+      case Some(n) => iterator.take(n)
+      case None => iterator
+    }
+  }
+
+  private def process(session: AspaceSession, now: String): Unit = {
     println("2. running updates")
-    val now = Instant.now().toString
+    
     val writer = new FileWriter(new File(s"topcontainer-update-$now.log"))
 
     getIterator(session).foreach { line =>
@@ -154,7 +160,7 @@ object Main extends App with CLISupport with AspaceSupport {
     writer.close()
   }
 
-  private def testUpdates(aspaceSession: AspaceSession): Unit = {
+  private def testUpdates(aspaceSession: AspaceSession, now: String): Unit = {
     println("\n3. testing urls are updated")
     val now = Instant.now().toString
     val writer = new FileWriter(new File(s"topcontainer-failures-$now.log"))

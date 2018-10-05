@@ -1,8 +1,8 @@
 scalaVersion := "2.12.6"
 
-version := ""
+version := "0.4b-SNAPSHOT"
 
-assemblyJarName in assembly := "TCUpdate-0.3b-SNAPSHOT.jar"
+assemblyJarName in assembly := "TCUpdate-0.4b-SNAPSHOT.jar"
 
 mainClass in assembly := Some("edu.nyu.libraries.dlts.aspace.Main")
 
