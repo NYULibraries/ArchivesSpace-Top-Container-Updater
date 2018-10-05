@@ -1,5 +1,6 @@
-tcUpdater {
-    username="username"
-    password="password"
-    aspaceApi="aspace api url"
+client {
+    prod="https://example.org:8089"
+    stage="https://example.org:8089"
+    dev= "https://example.org:8089"
+    timeout=10
 }
